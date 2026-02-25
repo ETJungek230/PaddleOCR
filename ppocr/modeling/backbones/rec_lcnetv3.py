@@ -38,7 +38,7 @@ from ppocr.modeling.backbones.rec_hgnet import MeanPool2D
 NET_CONFIG_det = {
     "blocks2":
     # k, in_c, out_c, s, use_se
-    [[3, 16, 32, 1, False]],
+        [[3, 16, 32, 1, False]],
     "blocks3": [[3, 32, 64, 2, False], [3, 64, 64, 1, False]],
     "blocks4": [[3, 64, 128, 2, False], [3, 128, 128, 1, False]],
     "blocks5": [
@@ -57,9 +57,10 @@ NET_CONFIG_det = {
 }
 
 NET_CONFIG_rec = {
-    "blocks2":
-    # k, in_c, out_c, s, use_se
-    [[3, 16, 32, 1, False]],
+    "blocks2": [
+        # k, in_c, out_c, s, use_se
+        [3, 16, 32, 1, False]
+    ],
     "blocks3": [[3, 32, 64, 1, False], [3, 64, 64, 1, False]],
     "blocks4": [[3, 64, 128, (2, 1), False], [3, 128, 128, 1, False]],
     "blocks5": [
@@ -113,7 +114,7 @@ class LearnableAffineBlock(nn.Layer):
 
 class ConvBNLayer(nn.Layer):
     def __init__(
-        self, in_channels, out_channels, kernel_size, stride, groups=1, lr_mult=1.0
+            self, in_channels, out_channels, kernel_size, stride, groups=1, lr_mult=1.0
     ):
         super().__init__()
         self.conv = Conv2D(
@@ -155,15 +156,15 @@ class Act(nn.Layer):
 
 class LearnableRepLayer(nn.Layer):
     def __init__(
-        self,
-        in_channels,
-        out_channels,
-        kernel_size,
-        stride=1,
-        groups=1,
-        num_conv_branches=1,
-        lr_mult=1.0,
-        lab_lr=0.1,
+            self,
+            in_channels,
+            out_channels,
+            kernel_size,
+            stride=1,
+            groups=1,
+            num_conv_branches=1,
+            lr_mult=1.0,
+            lab_lr=0.1,
     ):
         super().__init__()
         self.is_repped = False
@@ -349,15 +350,15 @@ class SELayer(nn.Layer):
 
 class LCNetV3Block(nn.Layer):
     def __init__(
-        self,
-        in_channels,
-        out_channels,
-        stride,
-        dw_size,
-        use_se=False,
-        conv_kxk_num=4,
-        lr_mult=1.0,
-        lab_lr=0.1,
+            self,
+            in_channels,
+            out_channels,
+            stride,
+            dw_size,
+            use_se=False,
+            conv_kxk_num=4,
+            lr_mult=1.0,
+            lab_lr=0.1,
     ):
         super().__init__()
         self.use_se = use_se
@@ -393,18 +394,22 @@ class LCNetV3Block(nn.Layer):
 
 class PPLCNetV3(nn.Layer):
     def __init__(
-        self,
-        scale=1.0,
-        conv_kxk_num=4,
-        lr_mult_list=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
-        lab_lr=0.1,
-        det=False,
-        **kwargs,
+            self,
+            scale=1.0,
+            conv_kxk_num=4,
+            lr_mult_list=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+            lab_lr=0.1,
+            det=False,
+            last_dim=40,
+            last_pool_kernel_size=[3, 2],
+            **kwargs,
     ):
         super().__init__()
         self.scale = scale
         self.lr_mult_list = lr_mult_list
         self.det = det
+        self.last_dim = last_dim
+        self.last_pool_kernel_size = last_pool_kernel_size
 
         self.net_config = NET_CONFIG_det if self.det else NET_CONFIG_rec
 
@@ -414,7 +419,7 @@ class PPLCNetV3(nn.Layer):
             type(self.lr_mult_list)
         )
         assert (
-            len(self.lr_mult_list) == 6
+                len(self.lr_mult_list) == 6
         ), "lr_mult_list length should be 6 but got {}".format(len(self.lr_mult_list))
 
         self.conv1 = ConvBNLayer(
@@ -530,9 +535,9 @@ class PPLCNetV3(nn.Layer):
                 int(mv_c[3] * scale),
             ]
 
-    def forward(self, x):
+    def forward(self, input):
         out_list = []
-        x = self.conv1(x)
+        x = self.conv1(input)
 
         x = self.blocks2(x)
         x = self.blocks3(x)
@@ -552,7 +557,7 @@ class PPLCNetV3(nn.Layer):
             return out_list
 
         if self.training:
-            x = F.adaptive_avg_pool2d(x, [1, 40])
+            x = F.adaptive_avg_pool2d(x, [1, self.last_dim])
         else:
-            x = F.avg_pool2d(x, [3, 2])
+            x = F.avg_pool2d(x, self.last_pool_kernel_size)
         return x

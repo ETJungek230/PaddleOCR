@@ -148,7 +148,7 @@ def dump_infer_config(config, path, logger):
                 postprocess["character_dict"]["fast_tokenizer_file"] = character_dict
         if tokenizer_config_file is not None:
             with open(
-                tokenizer_config_file, encoding="utf-8"
+                    tokenizer_config_file, encoding="utf-8"
             ) as tokenizer_config_handle:
                 character_dict = json.load(tokenizer_config_handle)
                 postprocess["character_dict"]["tokenizer_config_file"] = character_dict
@@ -192,8 +192,10 @@ def dynamic_to_static(model, arch_config, logger, input_shape=None):
         ]
         model = to_static(model, input_spec=other_shape)
     elif arch_config["algorithm"] in ["SVTR_LCNet", "SVTR_HGNet"]:
+        if not input_shape:
+            input_shape = [3, 48, -1]
         other_shape = [
-            paddle.static.InputSpec(shape=[None, 3, 48, -1], dtype="float32"),
+            paddle.static.InputSpec(shape=[None] + input_shape, dtype="float32"),
         ]
         model = to_static(model, input_spec=other_shape)
     elif arch_config["algorithm"] in ["SVTR", "CPPD"]:
@@ -333,9 +335,9 @@ def dynamic_to_static(model, arch_config, logger, input_shape=None):
         if arch_config["model_type"] == "rec":
             infer_shape = [3, 32, -1]  # for rec model, H must be 32
             if (
-                "Transform" in arch_config
-                and arch_config["Transform"] is not None
-                and arch_config["Transform"]["name"] == "TPS"
+                    "Transform" in arch_config
+                    and arch_config["Transform"] is not None
+                    and arch_config["Transform"]["name"] == "TPS"
             ):
                 logger.info(
                     "When there is tps in the network, variable length input is not supported, and the input size needs to be the same as during training"
@@ -355,8 +357,8 @@ def dynamic_to_static(model, arch_config, logger, input_shape=None):
         )
 
     if (
-        arch_config["model_type"] != "sr"
-        and arch_config["Backbone"]["name"] == "PPLCNetV3"
+            arch_config["model_type"] != "sr"
+            and arch_config["Backbone"]["name"] == "PPLCNetV3"
     ):
         # for rep lcnetv3
         for layer in model.sublayers():
@@ -366,35 +368,34 @@ def dynamic_to_static(model, arch_config, logger, input_shape=None):
 
 
 def export_single_model(
-    model,
-    arch_config,
-    save_path,
-    logger,
-    yaml_path,
-    config,
-    input_shape=None,
-    quanter=None,
+        model,
+        arch_config,
+        save_path,
+        logger,
+        yaml_path,
+        config,
+        input_shape=None,
+        quanter=None,
 ):
-
     model = dynamic_to_static(model, arch_config, logger, input_shape)
 
     if quanter is None:
         try:
             import encryption  # Attempt to import the encryption module for AIStudio's encryption model
         except (
-            ModuleNotFoundError
+                ModuleNotFoundError
         ):  # Encryption is not needed if the module cannot be imported
             print("Skipping import of the encryption module")
         paddle_version = version.parse(paddle.__version__)
         if config["Global"].get("export_with_pir", True):
             assert (
-                paddle_version >= version.parse("3.0.0b2")
-                or paddle_version == version.parse("0.0.0")
-            ) and os.environ.get("FLAGS_enable_pir_api", None) not in ["0", "False"]
+                           paddle_version >= version.parse("3.0.0b2")
+                           or paddle_version == version.parse("0.0.0")
+                   ) and os.environ.get("FLAGS_enable_pir_api", None) not in ["0", "False"]
             paddle.jit.save(model, save_path)
         else:
             if paddle_version >= version.parse(
-                "3.0.0b2"
+                    "3.0.0b2"
             ) or paddle_version == version.parse("0.0.0"):
                 model.forward.rollback()
                 with paddle.pir_utils.OldIrGuard():
@@ -436,7 +437,7 @@ def export(config, base_model=None, save_path=None):
         ]:  # distillation model
             for key in config["Architecture"]["Models"]:
                 if (
-                    config["Architecture"]["Models"][key]["Head"]["name"] == "MultiHead"
+                        config["Architecture"]["Models"][key]["Head"]["name"] == "MultiHead"
                 ):  # multi head
                     out_channels_list = {}
                     if config["PostProcess"]["name"] == "DistillationSARLabelDecode":
@@ -508,8 +509,8 @@ def export(config, base_model=None, save_path=None):
     arch_config = config["Architecture"]
 
     if (
-        arch_config["algorithm"] in ["SVTR", "CPPD"]
-        and arch_config["Head"]["name"] != "MultiHead"
+            arch_config["algorithm"] in ["SVTR", "CPPD"]
+            and arch_config["Head"]["name"] != "MultiHead"
     ):
         input_shape = config["Eval"]["dataset"]["transforms"][-2]["SVTRRecResizeImg"][
             "image_shape"
@@ -521,6 +522,8 @@ def export(config, base_model=None, save_path=None):
             if "ABINetRecResizeImg" in c
         ]
         input_shape = rec_rs[0]["ABINetRecResizeImg"]["image_shape"] if rec_rs else None
+    elif _img_shape := config["Global"].get("d2s_train_image_shape", None):
+        input_shape = _img_shape
     else:
         input_shape = None
     dump_infer_config(config, yaml_path, logger)
