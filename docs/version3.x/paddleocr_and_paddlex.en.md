@@ -20,7 +20,7 @@ PaddleOCR fully reuses the capabilities of PaddleX in the inference deployment p
 - The high-performance inference capabilities of PaddleOCR are achieved through PaddleX's Paddle2ONNX plugin and high-performance inference plugins.
 - The service deployment solutions of PaddleOCR are based on PaddleX's implementations.
 
-It is important to note that although PaddleOCR uses PaddleX at the underlying level, thanks to PaddleX’s optional dependency installation feature, **installing the `paddleocr` Python distribution package does not include all of PaddleX’s dependencies—only those required for OCR-related tasks are installed**. Therefore, users generally do not need to worry about excessive expansion of dependency size. Tested in May 2025, in an x86-64 + Linux + Python 3.10 environment, the total size of required dependencies increased only from 717 MB to 738 MB.
+It is important to note that although PaddleOCR uses PaddleX at the underlying level, thanks to PaddleX’s optional dependency installation feature, **installing the PaddleOCR inference package does not include all of PaddleX’s dependencies—only those required for OCR-related tasks are installed**. Therefore, users generally do not need to worry about excessive expansion of dependency size. Tested in May 2025, in an x86-64 + Linux + Python 3.10 environment, the total size of required dependencies increased only from 717 MB to 738 MB.
 
 The version correspondence between PaddleOCR, PaddleX, and the PaddlePaddle framework is as follows:
 
@@ -34,9 +34,6 @@ The version correspondence between PaddleOCR, PaddleX, and the PaddlePaddle fram
 | `3.2.x` | `>= 3.2.0, < 3.3.0` | `>= 3.0.0` |
 | `3.3.x` | `>= 3.3.0, < 3.4.0` | `>= 3.0.0` |
 | `3.4.x` | `>= 3.4.0, < 3.5.0` | `>= 3.0.0` |
-| `3.5.x` | `>= 3.5.0, < 3.6.0` | `>= 3.0.0` |
-| `3.6.x` | `>= 3.6.0, < 3.7.0` | `>= 3.0.0` |
-| `3.7.x` | `>= 3.7.0, < 3.8.0` | `>= 3.0.0` |
 
 ## 2. Correspondence Between PaddleOCR Pipelines and PaddleX Pipeline Registration Names
 
@@ -53,7 +50,6 @@ The version correspondence between PaddleOCR, PaddleX, and the PaddlePaddle fram
 | PP-DocTranslation | `PP-DocTranslation` |
 | PaddleOCR-VL | `PaddleOCR-VL` |
 | PaddleOCR-VL-1.5 | `PaddleOCR-VL-1.5` |
-| PaddleOCR-VL-1.6 | `PaddleOCR-VL-1.6` |
 
 ## 3. Using PaddleX Pipeline Configuration Files
 
