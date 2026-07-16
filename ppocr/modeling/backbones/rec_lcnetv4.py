@@ -31,7 +31,6 @@ from paddle.nn import (
 )
 from paddle.regularizer import L2Decay
 
-
 NET_CONFIG_DET = {
     "tiny": {
         # stem(mid=16, out=32)  channels: 32 → 48 → 64 → 160
@@ -100,7 +99,6 @@ NET_CONFIG_DET = {
         ],
     },
 }
-
 
 NET_CONFIG_REC = {
     "tiny": {
@@ -175,14 +173,14 @@ NET_CONFIG_REC = {
 
 class Conv2D_BN(nn.Sequential):
     def __init__(
-        self,
-        in_channels,
-        out_channels,
-        kernel_size=1,
-        stride=1,
-        padding=0,
-        groups=1,
-        bn_weight_init=1.0,
+            self,
+            in_channels,
+            out_channels,
+            kernel_size=1,
+            stride=1,
+            padding=0,
+            groups=1,
+            bn_weight_init=1.0,
     ):
         super().__init__()
         self.add_sublayer(
@@ -223,15 +221,15 @@ class Conv2D_BN(nn.Sequential):
 
 class ConvBNAct(nn.Layer):
     def __init__(
-        self,
-        in_channels,
-        out_channels,
-        kernel_size=3,
-        stride=1,
-        padding=1,
-        groups=1,
-        use_act=True,
-        lr_mult=1.0,
+            self,
+            in_channels,
+            out_channels,
+            kernel_size=3,
+            stride=1,
+            padding=1,
+            groups=1,
+            use_act=True,
+            lr_mult=1.0,
     ):
         super().__init__()
         self.use_act = use_act
@@ -445,15 +443,15 @@ class LCNetV4Block(nn.Layer):
     """
 
     def __init__(
-        self,
-        in_channels,
-        out_channels,
-        stride,
-        dw_size,
-        use_se=False,
-        lr_mult=1.0,
-        expand_ratio=2,
-        act_type="gelu",
+            self,
+            in_channels,
+            out_channels,
+            stride,
+            dw_size,
+            use_se=False,
+            lr_mult=1.0,
+            expand_ratio=2,
+            act_type="gelu",
     ):
         super().__init__()
         self.is_repped = False
@@ -531,20 +529,24 @@ class PPLCNetV4(nn.Layer):
     """
 
     def __init__(
-        self,
-        det=False,
-        model_size="small",
-        in_channels=3,
-        lr_mult_list=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
-        **kwargs,
+            self,
+            det=False,
+            model_size="small",
+            in_channels=3,
+            lr_mult_list=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+            last_dim=40,
+            last_pool_kernel_size=[3, 2],
+            **kwargs,
     ):
         super().__init__()
         self.det = det
         self.is_repped = False
+        self.last_dim = last_dim
+        self.last_pool_kernel_size = last_pool_kernel_size
 
         if det:
             assert (
-                model_size in NET_CONFIG_DET
+                    model_size in NET_CONFIG_DET
             ), "det model_size must be one of {} but got '{}'".format(
                 list(NET_CONFIG_DET.keys()), model_size
             )
@@ -574,7 +576,7 @@ class PPLCNetV4(nn.Layer):
         else:
             assert isinstance(lr_mult_list, (list, tuple)) and len(lr_mult_list) == 6
             assert (
-                model_size in NET_CONFIG_REC
+                    model_size in NET_CONFIG_REC
             ), "rec model_size must be one of {} but got '{}'".format(
                 list(NET_CONFIG_REC.keys()), model_size
             )
@@ -613,7 +615,7 @@ class PPLCNetV4(nn.Layer):
             self.blocks6 = make_stage("blocks6", 5)
 
             for sname in reversed(
-                ["blocks2", "blocks3", "blocks4", "blocks5", "blocks6"]
+                    ["blocks2", "blocks3", "blocks4", "blocks5", "blocks6"]
             ):
                 if cfg.get(sname):
                     self.out_channels = cfg[sname][-1][2]
@@ -635,10 +637,11 @@ class PPLCNetV4(nn.Layer):
             x = self.blocks5(x)
             x = self.blocks6(x)
             if self.training:
-                x = F.adaptive_avg_pool2d(x, [1, 40])
+                x = F.adaptive_avg_pool2d(x, [1, self.last_dim])
             else:
-                assert x.shape[2] >= 3, f"Feature height {x.shape[2]} < pool kernel 3."
-                x = F.avg_pool2d(x, [3, 2])
+                assert x.shape[2] >= self.last_pool_kernel_size[0], \
+                    f"Feature height {x.shape[2]} < pool kernel {self.last_pool_kernel_size}."
+                x = F.avg_pool2d(x, self.last_pool_kernel_size)
             return x
 
     def rep(self, fuse_lab=None):
