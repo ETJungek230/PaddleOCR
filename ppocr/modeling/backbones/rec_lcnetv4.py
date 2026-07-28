@@ -536,6 +536,7 @@ class PPLCNetV4(nn.Layer):
             lr_mult_list=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
             last_dim=40,
             last_pool_kernel_size=[3, 2],
+            stem_conv_stride=2,
             **kwargs,
     ):
         super().__init__()
@@ -589,7 +590,7 @@ class PPLCNetV4(nn.Layer):
                 self.conv1 = nn.Sequential(
                     Conv2D_BN(3, stem_mid, 3, 2, 1),
                     GELU(),
-                    Conv2D_BN(stem_mid, stem_out, 3, 2, 1),
+                    Conv2D_BN(stem_mid, stem_out, 3, stem_conv_stride, 1),
                 )
 
             def make_stage(stage_name, lr_idx):
