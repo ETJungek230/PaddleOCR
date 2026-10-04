@@ -1,12 +1,13 @@
 name: Docs Anchor Link Check
 
 on:
-  pull_request:
-    paths:
-      - 'docs/**'
-      - 'mkdocs.yml'
-      - 'mkdocs-ci.yml'
-      - 'overrides/**'
+#  pull_request:
+#    paths:
+#      - 'docs/**'
+#      - 'mkdocs.yml'
+#      - 'mkdocs-ci.yml'
+#      - 'overrides/**'
+  workflow_dispatch:
 
 jobs:
   check-anchor-links:

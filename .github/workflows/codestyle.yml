@@ -1,9 +1,10 @@
 name: PaddleOCR Code Style Check
 
 on:
-  pull_request:
-  push:
-    branches: ['main', 'release/*']
+#  pull_request:
+#  push:
+#    branches: ['main', 'release/*']
+  workflow_dispatch:
 
 jobs:
   check-code-style:
